@@ -29,14 +29,28 @@ module BilibiliSunday
 		private
 
 			def update_status(cid)
+				# If download already completed, skip updating status. 
+				return if cache_completed?(cid)
+
 				downloads = load_yaml(downloads_yaml_path(cid))
+				old_status = load_yaml(status_yaml_path(cid))
 
 				puts downloads_yaml_path(cid)
 
 				status = []
 				incomplete = false
 
-				downloads.each do |download|
+				downloads.each_with_index do |download, order|
+					# If already completed, stop updating status. 
+					if old_status
+						last_status = old_status[order][:status]
+						if last_status['status'] == 'complete'
+							download[:status] = last_status
+							status << download
+							next
+						end
+					end
+
 					download[:status] = @downloader.query_status(download[:download_id])
 					incomplete = true unless download[:status]['status'] == 'complete'
 					status << download
