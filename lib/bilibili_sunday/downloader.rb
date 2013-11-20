@@ -26,6 +26,28 @@ module BilibiliSunday
 			end
 		end
 
+		def query_status(cid)
+			status = :unknown
+			status = :caching if cache_in_progress?(cid)
+			status = :concatenating if concat_in_progress?(cid)
+			status = :complete if concat_completed?(cid)
+
+			{
+				cid: cid,
+				status: status, 
+				downloads: load_yaml(status_yaml_path(cid)) || [], 
+				path: concat_completed?(cid) ? concat_output_file_path(cid) : nil
+			}
+		end
+
+		def request_cache(cid)
+			cache(cid)
+		end
+
+		def all_videos
+			Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
+		end
+
 		private
 
 			def update_status(cid)
@@ -34,8 +56,6 @@ module BilibiliSunday
 
 				downloads = load_yaml(downloads_yaml_path(cid))
 				old_status = load_yaml(status_yaml_path(cid))
-
-				puts downloads_yaml_path(cid)
 
 				status = []
 				incomplete = false
@@ -58,10 +78,6 @@ module BilibiliSunday
 
 				write_yaml(status_yaml_path(cid), status)
 				mark_cache_complete(cid) unless incomplete
-			end
-
-			def all_videos
-				Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
 			end
 
 			def load_yaml(path)
@@ -119,7 +135,7 @@ module BilibiliSunday
 			end
 
 			def cache_in_progress?(cid)
-				cache_started?(cid) && (!cache_completed(cid))
+				cache_started?(cid) && (!cache_completed?(cid))
 			end
 
 			def concat_started?(cid)
@@ -131,7 +147,7 @@ module BilibiliSunday
 			end
 
 			def concat_in_progress?(cid)
-				concat_started?(cid) && (!concat_completed(cid))
+				concat_started?(cid) && (!concat_completed?(cid))
 			end
 
 			def downloads_yaml_path(cid)
@@ -162,8 +178,6 @@ module BilibiliSunday
 			def ffmpeg_concat_input_path(cid)
 				File.join(video_path(cid), 'concat_list')
 			end
-
-		public
 
 			def cache(cid)
 				return false if cache_started?(cid)
@@ -205,8 +219,6 @@ module BilibiliSunday
 			def remove_ffmpeg_concat_input_file(cid)
 				FileUtils.rm(ffmpeg_concat_input_path(cid))
 			end
-
-		public
 
 			def concat(cid)
 				return false if concat_started?(cid)
