@@ -9,6 +9,7 @@ module BilibiliSunday
 		require 'nokogiri'
 		require 'xmlsimple'
 		require 'uri'
+		require 'open-uri'
 
 		def initialize(work_path, downloader = nil)
 			FileUtils.mkdir_p(work_path)
@@ -48,7 +49,32 @@ module BilibiliSunday
 			Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
 		end
 
+		def self.cid_for_video_url(url)
+			doc = Nokogiri::HTML(gzip_inflate(open(url).read))
+
+			doc.css('.scontent').each do |i|
+				res = /cid=([0-9]*)/.match(i.to_s)
+
+				if res && res[1]
+					return res[1].to_i
+				else
+					raise "Not a valid Bilibili video page URL. "
+				end
+			end
+
+			raise "Not a valid Bilibili video page URL. "
+		end
+
 		private
+
+			def self.gzip_inflate(string)
+				# TODO Ugly workaround... 
+		    begin
+		      Zlib::GzipReader.new(StringIO.new(string)).read
+		    rescue
+		      string
+		    end
+			end
 
 			def update_status(cid)
 				# If download already completed, skip updating status. 
