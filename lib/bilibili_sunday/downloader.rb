@@ -196,8 +196,12 @@ module BilibiliSunday
 			end
 
 			def video_ext(cid)
+				# TODO better way of identifying file types
 				downloads = load_yaml(downloads_yaml_path(cid))
-				File.extname(downloads[0][:path])
+				ext = File.extname(downloads[0][:path])
+				ext && !ext.empty? ?
+					ext :
+					'.flv'
 			end
 
 			def concat_output_file_path(cid)
