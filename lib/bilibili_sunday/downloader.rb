@@ -10,15 +10,19 @@ module BilibiliSunday
 		require 'xmlsimple'
 		require 'uri'
 		require 'open-uri'
+		require 'logger'
 
-		def initialize(work_path, downloader = nil)
+		def initialize(work_path, downloader = nil, logger = nil)
 			FileUtils.mkdir_p(work_path)
 
 			@work_path = File.expand_path(work_path)
 			@downloader = downloader || Aria2::Downloader.new
+			@logger = logger || Logger.new($stdout)
 		end
 
 		def routine_work
+			@logger.info 'Carrying out routine work. '
+
 			videos = all_videos
 
 			videos.each do |cid|

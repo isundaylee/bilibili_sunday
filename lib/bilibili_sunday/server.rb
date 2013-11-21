@@ -75,15 +75,38 @@ module BilibiliSunday
 		end
 
 		def start
-			begin
-				server = WEBrick::HTTPServer.new(:Port => @port)
-				server.mount "/jsonrpc", Servlet, @downloader
-				trap('INT'){ server.shutdown }
-				server.start
-			rescue
-			ensure
-				server.shutdown
+			@running = true
+
+			@downloader_thread = Thread.new do
+				while true
+					@downloader.routine_work
+					sleep 1
+				end
 			end
+
+			@rpc_server_thread = Thread.new do
+				begin
+					server = WEBrick::HTTPServer.new(:Port => @port)
+					server.mount "/jsonrpc", Servlet, @downloader
+					server.start
+				rescue
+				ensure
+					server.shutdown
+				end
+			end
+
+			while true
+				unless @running
+					@downloader_thread.terminate
+					@rpc_server_thread.terminate
+					break
+				end
+				sleep 1
+			end
+		end
+
+		def stop
+			@running = false
 		end
 
 	end
