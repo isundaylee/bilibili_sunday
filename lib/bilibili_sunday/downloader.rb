@@ -81,6 +81,9 @@ module BilibiliSunday
 			end
 
 			def update_status(cid)
+				# If download has not started yet, skip updating status. 
+				return unless cache_started?(cid)
+
 				# If download already completed, skip updating status. 
 				return if cache_completed?(cid)
 
