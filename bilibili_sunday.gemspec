@@ -24,4 +24,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "ruby-aria2"
   spec.add_dependency "nokogiri"
   spec.add_dependency "xml-simple"
+  spec.add_dependency "webrick"
 end
