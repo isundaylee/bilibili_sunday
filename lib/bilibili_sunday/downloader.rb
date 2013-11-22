@@ -204,6 +204,11 @@ module BilibiliSunday
 					'.flv'
 			end
 
+			def fix_extname(extname)
+				return '.flv' if extname == '.hlv'
+				extname
+			end
+
 			def concat_output_file_path(cid)
 				File.join(video_path(cid), "entirety#{video_ext(cid)}")
 			end
@@ -225,7 +230,7 @@ module BilibiliSunday
 				downloads = []
 
 				filelist.each_with_index do |url, order|
-					to_name = "#{order}#{File.extname(URI.parse(url).path)}"
+					to_name = "#{order}#{fix_extname(File.extname(URI.parse(url).path))}"
 					to_path = File.join(video_path(cid), to_name)
 
 					downloads << {

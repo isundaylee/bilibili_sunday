@@ -22,6 +22,12 @@ module BilibiliSunday
 
 				if method == 'cid_for_video_url'
 					handle_cid_for_video_url(params[0])
+				elsif method == 'request_cache'
+					handle_request_cache(params[0].to_i)
+				elsif method == 'query_status'
+					handle_query_status(params[0].to_i)
+				elsif method == 'all_videos'
+					handle_all_videos
 				else
 					handle_error(1, 'No matching method. ')
 				end
@@ -32,6 +38,18 @@ module BilibiliSunday
 
 		def handle_cid_for_video_url(url)
 			return 200, {result: BilibiliSunday::Downloader.cid_for_video_url(url)}
+		end
+
+		def handle_request_cache(cid)
+			return 200, {result: @downloader.request_cache(cid)}
+		end
+
+		def handle_query_status(cid)
+			return 200, {result: @downloader.query_status(cid)}
+		end
+
+		def handle_all_videos
+			return 200, {result: @downloader.all_videos}
 		end
 
 		def handle_error(error_code, error_message)

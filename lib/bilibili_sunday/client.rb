@@ -19,6 +19,18 @@ module BilibiliSunday
 			rpc_call('cid_for_video_url', [url])
 		end
 
+		def request_cache(cid)
+			rpc_call('request_cache', [cid])
+		end
+
+		def all_videos
+			rpc_call('all_videos', [])
+		end
+
+		def query_status(cid)
+			rpc_call('query_status', [cid])
+		end
+
 		private
 
 			def get(url, params = {})
