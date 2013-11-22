@@ -69,6 +69,10 @@ module BilibiliSunday
 			raise "Not a valid Bilibili video page URL. "
 		end
 
+		def active_videos
+			all_videos.select { |i| !concat_completed?(i)}
+		end
+
 		private
 
 			def self.gzip_inflate(string)

@@ -28,6 +28,8 @@ module BilibiliSunday
 					handle_query_status(params[0].to_i)
 				elsif method == 'all_videos'
 					handle_all_videos
+				elsif method == 'active_videos'
+					handle_active_videos
 				else
 					handle_error(1, 'No matching method. ')
 				end
@@ -50,6 +52,10 @@ module BilibiliSunday
 
 		def handle_all_videos
 			return 200, {result: @downloader.all_videos}
+		end
+
+		def handle_active_videos
+			return 200, {result: @downloader.active_videos}
 		end
 
 		def handle_error(error_code, error_message)

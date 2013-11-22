@@ -24,6 +24,10 @@ def print_status(status)
 
 end
 
+if ARGV[0] && ARGV[0] == 'active'
+	@active = true
+end
+
 client = BilibiliSunday::Client.new
 
 while true
@@ -34,7 +38,9 @@ while true
 
 	system('clear')
 
-	videos_list = client.all_videos.map { |x| x.to_i }
+	videos_list = @active ?
+		client.active_videos.map { |x| x.to_i } :
+		client.all_videos.map { |x| x.to_i } 
 
 	puts divider
 

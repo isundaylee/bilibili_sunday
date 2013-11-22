@@ -27,6 +27,10 @@ module BilibiliSunday
 			rpc_call('all_videos', [])
 		end
 
+		def active_videos
+			rpc_call('active_videos', [])
+		end
+
 		def query_status(cid)
 			rpc_call('query_status', [cid])
 		end
