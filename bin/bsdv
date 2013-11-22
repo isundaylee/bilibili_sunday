@@ -1,0 +1,63 @@
+# encoding: utf-8
+#!/usr/bin/env ruby
+
+require 'bilibili_sunday/client'
+
+url = ARGV[0]
+host = ARGV[1]
+client = BilibiliSunday::Client.new(host)
+
+cid = client.cid_for_video_url(url)
+title = client.title_for_video_url(url)
+videos = client.all_videos
+
+client.request_cache(cid) unless videos.include?(cid)
+
+def print_bar(progress)
+	width = @width - 20
+	length = (width * progress).to_i
+
+	print '    '
+	print '#' * length
+	print ' ' * (width - length)
+	print ' '
+	print "%3.6f\%" % (100 * progress)
+	puts
+end
+
+def print_status(status)
+
+	puts "  #{status['cid']}: #{status['status']} - #{status['path']}"
+
+	status['downloads'].each do |download|
+		print_bar(download['status']['progress'].to_f)
+	end
+
+end
+
+while true
+
+	@width = `tput cols`.to_i
+
+	divider = '-' * @width
+	status = client.query_status(cid)
+
+	system('clear')
+
+	puts divider
+
+	puts title
+
+	puts divider
+
+	print_status(status)
+
+	puts divider
+
+	puts "Update Time: #{Time.now}"
+
+	puts divider
+
+	sleep 1
+
+end
