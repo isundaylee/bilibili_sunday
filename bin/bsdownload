@@ -1,0 +1,9 @@
+# encoding: utf-8
+#!/usr/bin/env ruby
+
+require 'bilibili_sunday/client'
+
+url = ARGV[0]
+client = BilibiliSunday::Client.new
+
+client.request_cache(client.cid_for_video_url(url))
