@@ -1,0 +1,7 @@
+# encoding: utf-8
+#!/usr/bin/env ruby
+
+require 'bilibili_sunday/server'
+
+server = BilibiliSunday::Server.new
+server.start
