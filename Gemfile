@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'ruby-aria2', github: 'isundaylee/ruby-aria2'
+gem 'aria2-ruby', github: 'isundaylee/aria2-ruby'
 
 # Specify your gem's dependencies in bilibili_sunday.gemspec
 gemspec
