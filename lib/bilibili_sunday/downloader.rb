@@ -14,13 +14,13 @@ module BilibiliSunday
 		require 'open-uri'
 		require 'logger'
 
-		def initialize(work_path, downloader = nil, logger = nil)
-			FileUtils.mkdir_p(work_path)
-
-			@work_path = File.expand_path(work_path)
+		def initialize(work_path = nil, downloader = nil, logger = nil)
+			@work_path = File.expand_path(work_path || '~/.bilibili_sunday')
 			@downloader = downloader || Aria2::Downloader.new
 			@logger = logger || Logger.new($stdout)
 			@cacher = BilibiliSunday::Cacher.new(cacher_store_path)
+
+			FileUtils.mkdir_p(@work_path)
 		end
 
 		def routine_work
@@ -67,6 +67,16 @@ module BilibiliSunday
 				else
 					raise "Not a valid Bilibili video page URL. "
 				end
+			end
+
+			raise "Not a valid Bilibili video page URL. "
+		end
+
+		def title_for_video_url(url)
+			doc = Nokogiri::HTML(gzip_inflate(@cacher.read_url(url)))
+
+			doc.css('meta').each do |i|
+				return i['content'] if i['name'] == 'title'
 			end
 
 			raise "Not a valid Bilibili video page URL. "

@@ -22,6 +22,8 @@ module BilibiliSunday
 
 				if method == 'cid_for_video_url'
 					handle_cid_for_video_url(params[0])
+				elsif method == 'title_for_video_url'
+					handle_title_for_video_url(params[0])
 				elsif method == 'request_cache'
 					handle_request_cache(params[0].to_i)
 				elsif method == 'query_status'
@@ -40,6 +42,10 @@ module BilibiliSunday
 
 		def handle_cid_for_video_url(url)
 			return 200, {result: @downloader.cid_for_video_url(url)}
+		end
+
+		def handle_title_for_video_url(url)
+			return 200, {result: @downloader.title_for_video_url(url)}
 		end
 
 		def handle_request_cache(cid)
