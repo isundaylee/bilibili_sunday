@@ -25,7 +25,8 @@ def print_status(status)
 
 end
 
-client = BilibiliSunday::Client.new
+host = ARGV[0]
+client = BilibiliSunday::Client.new(host)
 
 while true
 

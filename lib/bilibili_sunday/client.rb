@@ -10,9 +10,9 @@ module BilibiliSunday
 		DEFAULT_HOST = '127.0.0.1'
 		DEFAULT_PORT = 10753
 
-		def initialize(host = DEFAULT_HOST, port = DEFAULT_PORT, working_dir = nil)
-			@host = host
-			@port = port
+		def initialize(host = nil, port = nil, working_dir = nil)
+			@host = host || DEFAULT_HOST
+			@port = port || DEFAULT_PORT
 		end
 
 		def cid_for_video_url(url)
