@@ -1,3 +1,5 @@
+require 'bilibili_sunday/cacher'
+
 module BilibiliSunday
 
 	class Downloader
@@ -18,6 +20,7 @@ module BilibiliSunday
 			@work_path = File.expand_path(work_path)
 			@downloader = downloader || Aria2::Downloader.new
 			@logger = logger || Logger.new($stdout)
+			@cacher = BilibiliSunday::Cacher.new(cacher_store_path)
 		end
 
 		def routine_work
@@ -53,8 +56,8 @@ module BilibiliSunday
 			Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
 		end
 
-		def self.cid_for_video_url(url)
-			doc = Nokogiri::HTML(gzip_inflate(open(url).read))
+		def cid_for_video_url(url)
+			doc = Nokogiri::HTML(gzip_inflate(@cacher.read_url(url)))
 
 			doc.css('.scontent').each do |i|
 				res = /cid=([0-9]*)/.match(i.to_s)
@@ -75,13 +78,13 @@ module BilibiliSunday
 
 		private
 
-			def self.gzip_inflate(string)
+			def gzip_inflate(string)
 				# TODO Ugly workaround... 
-		    begin
-		      Zlib::GzipReader.new(StringIO.new(string)).read
-		    rescue
-		      string
-		    end
+			    begin
+			      Zlib::GzipReader.new(StringIO.new(string)).read
+			    rescue
+			      string
+			    end
 			end
 
 			def update_status(cid)
@@ -134,7 +137,7 @@ module BilibiliSunday
 
 			def fetch_filelist(cid)
 				url = "http://interface.bilibili.tv/v_cdn_play?cid=#{cid}"
-				xml = XmlSimple::xml_in(open(url).read)
+				xml = XmlSimple::xml_in(@cacher.read_url(url))
 
 				filelist = [''] * xml['durl'].length
 
@@ -197,6 +200,10 @@ module BilibiliSunday
 
 			def concatenated_yaml_path(cid)
 				File.join(video_path(cid), 'concatenated.yaml') 
+			end
+
+			def cacher_store_path
+				File.join(@work_path, 'cache')
 			end
 
 			def video_ext(cid)

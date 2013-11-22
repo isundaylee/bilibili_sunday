@@ -33,13 +33,13 @@ module BilibiliSunday
 				else
 					handle_error(1, 'No matching method. ')
 				end
-			rescue
-				return handle_error(2, 'Internal server error. ')
+			# rescue
+				# return handle_error(2, 'Internal server error. ')
 			end
 		end
 
 		def handle_cid_for_video_url(url)
-			return 200, {result: BilibiliSunday::Downloader.cid_for_video_url(url)}
+			return 200, {result: @downloader.cid_for_video_url(url)}
 		end
 
 		def handle_request_cache(cid)
