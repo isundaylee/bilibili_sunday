@@ -35,8 +35,8 @@ module BilibiliSunday
 				else
 					handle_error(1, 'No matching method. ')
 				end
-			# rescue
-				# return handle_error(2, 'Internal server error. ')
+			rescue
+				return handle_error(2, 'Internal server error. ')
 			end
 		end
 
