@@ -51,6 +51,10 @@ while true
 		puts divider
 	end
 
+	puts "Update Time: #{Time.now}"
+
+	puts divider
+
 	sleep 1
 
 end
