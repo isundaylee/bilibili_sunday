@@ -88,6 +88,7 @@ module BilibiliSunday
 
 			response.status = code
 			response['Content-Type'] = 'application/json'
+			response['Access-Control-Allow-Origin'] = '*'
 			response.body = result.to_json
 		end
 
