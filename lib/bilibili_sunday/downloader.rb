@@ -13,48 +13,58 @@ module BilibiliSunday
 		require 'uri'
 		require 'open-uri'
 		require 'logger'
+		require 'thread'
 
 		def initialize(work_path = nil, downloader = nil, logger = nil)
 			@work_path = File.expand_path(work_path || '~/.bilibili_sunday')
 			@downloader = downloader || Aria2::Downloader.new
 			@logger = logger || Logger.new($stdout)
 			@cacher = BilibiliSunday::Cacher.new(cacher_store_path)
+			@mutex = Mutex.new
 
 			FileUtils.mkdir_p(@work_path)
 		end
 
 		def routine_work
-			@logger.info 'Carrying out routine work. '
+			@mutex.synchronize do
+				@logger.info 'Carrying out routine work. '
 
-			videos = all_videos
+				videos = all_videos
 
-			videos.each do |cid|
-				update_status(cid)
-				concat(cid) if (cache_completed?(cid) && (!concat_started?(cid)))
+				videos.each do |cid|
+					update_status(cid)
+					concat(cid) if (cache_completed?(cid) && (!concat_started?(cid)))
+				end
 			end
 		end
 
 		def query_status(cid)
-			status = :unknown
-			status = :caching if cache_in_progress?(cid)
-			status = :concatenating if concat_in_progress?(cid)
-			status = :complete if concat_completed?(cid)
+			@mutex.synchronize do
+				status = :unknown
+				status = :caching if cache_in_progress?(cid)
+				status = :concatenating if concat_in_progress?(cid)
+				status = :complete if concat_completed?(cid)
 
-			{
-				cid: cid,
-				status: status, 
-				downloads: load_yaml(status_yaml_path(cid)) || [], 
-				path: concat_completed?(cid) ? concat_output_file_path(cid) : nil,
-				comments_path: comments_path(cid)
-			}
+				{
+					cid: cid,
+					status: status, 
+					downloads: load_yaml(status_yaml_path(cid)) || [], 
+					path: concat_completed?(cid) ? concat_output_file_path(cid) : nil,
+					comments_path: comments_path(cid)
+				}
+			end
 		end
 
 		def request_cache(cid)
-			cache(cid)
+			@mutex.synchronize do
+				cache(cid)
+			end
 		end
 
 		def all_videos
-			Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
+			@mutex.synchronize do
+				Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
+			end
 		end
 
 		def cid_for_video_url(url)
@@ -84,7 +94,9 @@ module BilibiliSunday
 		end
 
 		def active_videos
-			all_videos.select { |i| !concat_completed?(i)}
+			@mutex.synchronize do
+				all_videos.select { |i| !concat_completed?(i)}
+			end
 		end
 
 		private
