@@ -29,7 +29,7 @@ module BilibiliSunday
 			@mutex.synchronize do
 				@logger.info 'Carrying out routine work. '
 
-				videos = all_videos
+				videos = get_all_videos
 
 				videos.each do |cid|
 					update_status(cid)
@@ -61,9 +61,15 @@ module BilibiliSunday
 			end
 		end
 
+		def remove_cache(cid)
+			@mutex.synchronize do
+				remove(cid)
+			end
+		end
+
 		def all_videos
 			@mutex.synchronize do
-				Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
+				get_all_videos
 			end
 		end
 
@@ -100,6 +106,10 @@ module BilibiliSunday
 		end
 
 		private
+
+			def get_all_videos
+				Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
+			end
 
 			def gzip_inflate(string)
 				# TODO Ugly workaround... 
@@ -322,6 +332,24 @@ module BilibiliSunday
 					end
 				end
 
+			end
+
+			def remove(cid)
+				return true unless cache_started?(cid)
+				return false if concat_in_progress?(cid)
+
+				downloads = load_yaml(downloads_yaml_path(cid))
+				status = load_yaml(status_yaml_path(cid))
+
+				downloads.each_with_index do |download, order|
+					if !status || status[order][:status]['status'] == 'active'
+						@downloader.remove(download[:download_id])
+					end
+				end		
+
+				FileUtils.rm_rf(video_path(cid))
+
+				true
 			end
 
 	end

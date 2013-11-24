@@ -3,5 +3,7 @@
 
 require 'bilibili_sunday/server'
 
+puts 'BilibiliSunday Version v' + BilibiliSunday::VERSION
+
 server = BilibiliSunday::Server.new
 server.start

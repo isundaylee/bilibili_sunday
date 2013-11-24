@@ -32,6 +32,8 @@ module BilibiliSunday
 					handle_all_videos
 				elsif method == 'active_videos'
 					handle_active_videos
+				elsif method == 'remove_cache'
+					handle_remove_cache(params[0].to_i)
 				else
 					handle_error(1, 'No matching method. ')
 				end
@@ -62,6 +64,10 @@ module BilibiliSunday
 
 		def handle_active_videos
 			return 200, {result: @downloader.active_videos}
+		end
+
+		def handle_remove_cache(cid)
+			return 200, {result: @downloader.remove_cache(cid)}
 		end
 
 		def handle_error(error_code, error_message)
