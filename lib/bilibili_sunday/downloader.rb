@@ -44,7 +44,8 @@ module BilibiliSunday
 				cid: cid,
 				status: status, 
 				downloads: load_yaml(status_yaml_path(cid)) || [], 
-				path: concat_completed?(cid) ? concat_output_file_path(cid) : nil
+				path: concat_completed?(cid) ? concat_output_file_path(cid) : nil,
+				path: comments_path(cid)
 			}
 		end
 
@@ -214,6 +215,10 @@ module BilibiliSunday
 
 			def cacher_store_path
 				File.join(@work_path, 'cache')
+			end
+
+			def comments_path(cid)
+				"http://comment.bilibili.tv/#{cid}.xml"
 			end
 
 			def video_ext(cid)
