@@ -33,6 +33,7 @@ module BilibiliSunday
 
 				videos.each do |cid|
 					update_status(cid)
+					cleanup(cid)
 					concat(cid) if (cache_completed?(cid) && (!concat_started?(cid)))
 				end
 			end
@@ -102,6 +103,17 @@ module BilibiliSunday
 		end
 
 		private
+
+			def cleanup(cid)
+				if concat_completed?(cid)
+					# Deletes the partial files
+					downloads = load_yaml(downloads_yaml_path(cid))
+					downloads.each do |download|
+						path = download[:path]
+						FileUtils.rm(path) if File.exists?(path)
+					end
+				end
+			end
 
 			def get_all_videos
 				Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
