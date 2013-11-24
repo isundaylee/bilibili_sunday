@@ -45,7 +45,7 @@ module BilibiliSunday
 				status: status, 
 				downloads: load_yaml(status_yaml_path(cid)) || [], 
 				path: concat_completed?(cid) ? concat_output_file_path(cid) : nil,
-				path: comments_path(cid)
+				comments_path: comments_path(cid)
 			}
 		end
 
