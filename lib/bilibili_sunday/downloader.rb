@@ -76,17 +76,13 @@ module BilibiliSunday
 		def cid_for_video_url(url)
 			doc = Nokogiri::HTML(gzip_inflate(@cacher.read_url(url)))
 
-			doc.css('.scontent').each do |i|
-				res = /cid=([0-9]*)/.match(i.to_s)
+			res = /secure,cid=([0-9]*)/.match(doc.to_s)
 
-				if res && res[1]
-					return res[1].to_i
-				else
-					raise "Not a valid Bilibili video page URL. "
-				end
+			if res && res[1]
+				return res[1].to_i
+			else
+				raise "Not a valid Bilibili video page URL. "
 			end
-
-			raise "Not a valid Bilibili video page URL. "
 		end
 
 		def title_for_video_url(url)
