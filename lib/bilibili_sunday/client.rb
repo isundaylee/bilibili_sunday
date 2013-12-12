@@ -39,6 +39,10 @@ module BilibiliSunday
 			rpc_call('query_status', [cid])
 		end
 
+		def remove_cache(cid)
+			rpc_call('remove_cache', [cid])
+		end
+
 		private
 
 			def get(url, params = {})

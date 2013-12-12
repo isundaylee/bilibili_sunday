@@ -13,63 +13,77 @@ module BilibiliSunday
 		require 'uri'
 		require 'open-uri'
 		require 'logger'
+		require 'thread'
 
 		def initialize(work_path = nil, downloader = nil, logger = nil)
 			@work_path = File.expand_path(work_path || '~/.bilibili_sunday')
 			@downloader = downloader || Aria2::Downloader.new
 			@logger = logger || Logger.new($stdout)
 			@cacher = BilibiliSunday::Cacher.new(cacher_store_path)
+			@mutex = Mutex.new
 
 			FileUtils.mkdir_p(@work_path)
 		end
 
 		def routine_work
-			@logger.info 'Carrying out routine work. '
+			@mutex.synchronize do
+				@logger.info 'Carrying out routine work. '
 
-			videos = all_videos
+				videos = get_all_videos
 
-			videos.each do |cid|
-				update_status(cid)
-				concat(cid) if (cache_completed?(cid) && (!concat_started?(cid)))
+				videos.each do |cid|
+					update_status(cid)
+					cleanup(cid)
+					concat(cid) if (cache_completed?(cid) && (!concat_started?(cid)))
+				end
 			end
 		end
 
 		def query_status(cid)
-			status = :unknown
-			status = :caching if cache_in_progress?(cid)
-			status = :concatenating if concat_in_progress?(cid)
-			status = :complete if concat_completed?(cid)
+			@mutex.synchronize do
+				status = :unknown
+				status = :caching if cache_in_progress?(cid)
+				status = :concatenating if concat_in_progress?(cid)
+				status = :complete if concat_completed?(cid)
 
-			{
-				cid: cid,
-				status: status, 
-				downloads: load_yaml(status_yaml_path(cid)) || [], 
-				path: concat_completed?(cid) ? concat_output_file_path(cid) : nil
-			}
+				{
+					cid: cid,
+					status: status, 
+					downloads: load_yaml(status_yaml_path(cid)) || [], 
+					path: concat_completed?(cid) ? concat_output_file_path(cid) : nil,
+					comments_path: comments_path(cid)
+				}
+			end
 		end
 
 		def request_cache(cid)
-			cache(cid)
+			@mutex.synchronize do
+				cache(cid)
+			end
+		end
+
+		def remove_cache(cid)
+			@mutex.synchronize do
+				remove(cid)
+			end
 		end
 
 		def all_videos
-			Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
+			@mutex.synchronize do
+				get_all_videos
+			end
 		end
 
 		def cid_for_video_url(url)
 			doc = Nokogiri::HTML(gzip_inflate(@cacher.read_url(url)))
 
-			doc.css('.scontent').each do |i|
-				res = /cid=([0-9]*)/.match(i.to_s)
+			res = /secure,cid=([0-9]*)/.match(doc.to_s)
 
-				if res && res[1]
-					return res[1].to_i
-				else
-					raise "Not a valid Bilibili video page URL. "
-				end
+			if res && res[1]
+				return res[1].to_i
+			else
+				raise "Not a valid Bilibili video page URL. "
 			end
-
-			raise "Not a valid Bilibili video page URL. "
 		end
 
 		def title_for_video_url(url)
@@ -83,10 +97,27 @@ module BilibiliSunday
 		end
 
 		def active_videos
-			all_videos.select { |i| !concat_completed?(i)}
+			@mutex.synchronize do
+				all_videos.select { |i| !concat_completed?(i)}
+			end
 		end
 
 		private
+
+			def cleanup(cid)
+				if concat_completed?(cid)
+					# Deletes the partial files
+					downloads = load_yaml(downloads_yaml_path(cid))
+					downloads.each do |download|
+						path = download[:path]
+						FileUtils.rm(path) if File.exists?(path)
+					end
+				end
+			end
+
+			def get_all_videos
+				Dir.glob(File.join(video_store_path, '*')).select {|f| File.directory? f}.map { |f| File.basename(f).to_i }
+			end
 
 			def gzip_inflate(string)
 				# TODO Ugly workaround... 
@@ -216,6 +247,10 @@ module BilibiliSunday
 				File.join(@work_path, 'cache')
 			end
 
+			def comments_path(cid)
+				"http://comment.bilibili.tv/#{cid}.xml"
+			end
+
 			def video_ext(cid)
 				# TODO better way of identifying file types
 				downloads = load_yaml(downloads_yaml_path(cid))
@@ -305,6 +340,24 @@ module BilibiliSunday
 					end
 				end
 
+			end
+
+			def remove(cid)
+				return true unless cache_started?(cid)
+				return false if concat_in_progress?(cid)
+
+				downloads = load_yaml(downloads_yaml_path(cid))
+				status = load_yaml(status_yaml_path(cid))
+
+				downloads.each_with_index do |download, order|
+					if !status || status[order][:status]['status'] == 'active'
+						@downloader.remove(download[:download_id])
+					end
+				end		
+
+				FileUtils.rm_rf(video_path(cid))
+
+				true
 			end
 
 	end

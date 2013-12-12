@@ -2,6 +2,9 @@
 #!/usr/bin/env ruby
 
 require 'bilibili_sunday/server'
+require 'bilibili_sunday/version'
+
+puts 'BilibiliSunday Version v' + BilibiliSunday::VERSION
 
 server = BilibiliSunday::Server.new
 server.start
